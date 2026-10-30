@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Generator - Catatanku</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; padding: 24px; }
+        h1 { color: #1e293b; margin-bottom: 8px; }
+        p { color: #64748b; margin-bottom: 24px; }
+        .icons { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+        .icon-item { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .icon-item canvas { display: block; margin: 0 auto 8px; border-radius: 8px; }
+        .icon-item span { font-size: 0.8rem; color: #64748b; }
+        .btn { padding: 12px 24px; background: linear-gradient(135deg, #4f46e5, #818cf8); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        .btn:hover { box-shadow: 0 4px 12px rgba(79,70,229,0.4); }
+        .status { margin-top: 16px; color: #22c55e; font-weight: 600; display: none; }
+    </style>
+</head>
+<body>
+    <h1>🎨 Icon Generator — Catatanku PWA</h1>
+    <p>Klik tombol di bawah untuk men-download semua ikon PNG. Simpan ke folder <code>icons/</code> di project.</p>
+    <div class="icons" id="preview"></div>
+    <button class="btn" onclick="downloadAll()">📥 Download Semua Ikon</button>
+    <div class="status" id="status">✅ Semua ikon berhasil di-download!</div>
+
+<script>
+const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+function createIcon(size) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const s = size;
+
+    // === Background ===
+    roundRect(ctx, 0, 0, s, s, s * 0.18);
+    const grad = ctx.createLinearGradient(0, 0, s, s);
+    grad.addColorStop(0, '#4f46e5');
+    grad.addColorStop(1, '#818cf8');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // === Note paper ===
+    const nw = s * 0.50, nh = s * 0.55;
+    const nx = (s - nw) / 2, ny = (s - nh) / 2 - s * 0.02;
+    const nr = s * 0.03;
+
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    roundRect(ctx, nx + s*0.006, ny + s*0.01, nw, nh, nr);
+    ctx.fill();
+
+    // Paper
+    ctx.fillStyle = '#ffffff';
+    roundRect(ctx, nx, ny, nw, nh, nr);
+    ctx.fill();
+
+    // Fold corner
+    const fold = s * 0.09;
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.moveTo(nx + nw - fold, ny);
+    ctx.lineTo(nx + nw, ny + fold);
+    ctx.lineTo(nx + nw - fold, ny + fold);
+    ctx.closePath();
+    ctx.fill();
+
+    // Lines
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = Math.max(1.5, s * 0.012);
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 3; i++) {
+        const ly = ny + nh * 0.3 + i * nh * 0.18;
+        const lx1 = nx + nw * 0.15;
+        const lx2 = i === 2 ? nx + nw * 0.6 : nx + nw * 0.85;
+        ctx.beginPath();
+        ctx.moveTo(lx1, ly);
+        ctx.lineTo(lx2, ly);
+        ctx.stroke();
+    }
+
+    // === Pencil ===
+    ctx.save();
+    ctx.translate(nx + nw * 0.80, ny + nh * 0.88);
+    ctx.rotate(-Math.PI / 4);
+    const pw = s * 0.038, pl = s * 0.18;
+
+    // Body
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(-pw/2, -pl/2, pw, pl);
+    // Eraser
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(-pw/2, -pl/2, pw, pw * 1.3);
+    // Tip
+    ctx.fillStyle = '#374151';
+    ctx.beginPath();
+    ctx.moveTo(-pw/2, pl/2);
+    ctx.lineTo(pw/2, pl/2);
+    ctx.lineTo(0, pl/2 + pw * 1.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // === Checkmark badge ===
+    const bx = nx + nw * 0.12, by = ny + nh * 0.65;
+    const br = s * 0.04;
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(bx, by, br, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Checkmark
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(1, s * 0.008);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(bx - br*0.4, by);
+    ctx.lineTo(bx - br*0.05, by + br*0.35);
+    ctx.lineTo(bx + br*0.45, by - br*0.3);
+    ctx.stroke();
+
+    return canvas;
+}
+
+// Preview
+const preview = document.getElementById('preview');
+const canvases = {};
+
+sizes.forEach(size => {
+    const canvas = createIcon(size);
+    canvases[size] = canvas;
+
+    const div = document.createElement('div');
+    div.className = 'icon-item';
+
+    // Show scaled preview (max 96px display)
+    const displaySize = Math.min(size, 96);
+    canvas.style.width = displaySize + 'px';
+    canvas.style.height = displaySize + 'px';
+
+    div.appendChild(canvas);
+    const span = document.createElement('span');
+    span.textContent = size + ' × ' + size;
+    div.appendChild(span);
+    preview.appendChild(div);
+});
+
+function downloadAll() {
+    let i = 0;
+    sizes.forEach(size => {
+        setTimeout(() => {
+            const canvas = canvases[size];
+            const link = document.createElement('a');
+            link.download = 'icon-' + size + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }, i * 300);
+        i++;
+    });
+
+    setTimeout(() => {
+        document.getElementById('status').style.display = 'block';
+    }, sizes.length * 300 + 200);
+}
+</script>
+</body>
+</html>

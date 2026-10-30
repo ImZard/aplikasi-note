@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Catatanku">
+    <meta name="application-name" content="Catatanku">
+    <meta name="description" content="Aplikasi catatan dan pengingat pribadi — offline & lokal">
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <title>📝 Catatanku</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>📝 Catatanku</h1>
+                <button class="btn-icon sidebar-toggle-btn" id="closeSidebar" title="Tutup sidebar">✕</button>
+            </div>
+            <div class="sidebar-nav">
+                <button class="nav-item active" data-filter="all">
+                    <span class="nav-icon">📋</span>
+                    <span>Semua Catatan</span>
+                    <span class="badge" id="badgeAll">0</span>
+                </button>
+                <button class="nav-item" data-filter="reminder">
+                    <span class="nav-icon">⏰</span>
+                    <span>Pengingat</span>
+                    <span class="badge" id="badgeReminder">0</span>
+                </button>
+                <button class="nav-item" data-filter="pinned">
+                    <span class="nav-icon">📌</span>
+                    <span>Disematkan</span>
+                    <span class="badge" id="badgePinned">0</span>
+                </button>
+                <button class="nav-item" data-filter="archived">
+                    <span class="nav-icon">🗄️</span>
+                    <span>Arsip</span>
+                    <span class="badge" id="badgeArchived">0</span>
+                </button>
+            </div>
+            <div class="sidebar-section">
+                <h3>Label</h3>
+                <div id="labelList" class="label-list">
+                    <!-- Labels rendered here -->
+                </div>
+                <button class="btn-text" id="addLabelBtn">+ Tambah Label</button>
+            </div>
+            <div class="sidebar-footer">
+                <div class="storage-info">
+                    <span class="storage-icon">💾</span>
+                    <span id="storageInfo">Data tersimpan lokal</span>
+                </div>
+                <div class="pwa-actions">
+                    <button class="btn btn-sm-outline" id="exportBtn" title="Ekspor semua catatan">📤 Ekspor</button>
+                    <button class="btn btn-sm-outline" id="importBtn" title="Impor catatan">📥 Impor</button>
+                </div>
+                <input type="file" id="importFile" accept=".json" style="display:none">
+            </div>
+        </aside>
+
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-icon" id="openSidebar" title="Buka sidebar">☰</button>
+                    <h2 id="pageTitle">Semua Catatan</h2>
+                </div>
+                <div class="topbar-right">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchInput" placeholder="Cari catatan...">
+                    </div>
+                    <button class="btn-icon" id="toggleView" title="Ubah tampilan">
+                        <span id="viewIcon">▦</span>
+                    </button>
+                    <select id="sortSelect" class="sort-select" title="Urutkan">
+                        <option value="newest">Terbaru</option>
+                        <option value="oldest">Terlama</option>
+                        <option value="alpha">A-Z</option>
+                        <option value="reminder">Pengingat Terdekat</option>
+                    </select>
+                </div>
+            </header>
+
+            <!-- Offline Banner -->
+            <div class="offline-banner" id="offlineBanner" style="display:none;">
+                <span>📴 Mode Offline — Semua data tetap tersimpan lokal</span>
+            </div>
+
+            <!-- Install Banner -->
+            <div class="install-banner" id="installBanner" style="display:none;">
+                <div class="install-banner-text">
+                    <strong>📲 Install Catatanku</strong>
+                    <span>Pasang sebagai aplikasi di HP-mu</span>
+                </div>
+                <div class="install-banner-actions">
+                    <button class="btn btn-primary btn-sm-fit" id="installBtn">Install</button>
+                    <button class="btn-icon" id="dismissInstall">✕</button>
+                </div>
+            </div>
+
+            <!-- Notes Grid -->
+            <div class="notes-container" id="notesContainer">
+                <div class="notes-grid" id="notesGrid">
+                    <!-- Notes rendered here -->
+                </div>
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="empty-icon">📝</div>
+                    <h3>Belum ada catatan</h3>
+                    <p>Klik tombol + untuk membuat catatan baru</p>
+                </div>
+            </div>
+
+            <!-- FAB -->
+            <button class="fab" id="fabAdd" title="Tambah catatan baru">+</button>
+        </main>
+    </div>
+
+    <!-- Modal: Note Editor -->
+    <div class="modal-overlay" id="noteModal">
+        <div class="modal" id="noteModalContent">
+            <div class="modal-header">
+                <h2 id="modalTitle">Catatan Baru</h2>
+                <button class="btn-icon" id="closeModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input type="text" id="noteTitle" placeholder="Judul catatan..." class="input-title" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <div class="color-picker">
+                        <span class="color-label">Warna:</span>
+                        <div class="color-options" id="colorOptions">
+                            <button class="color-dot active" data-color="#ffffff" style="background:#ffffff" title="Putih"></button>
+                            <button class="color-dot" data-color="#fff3e0" style="background:#fff3e0" title="Oranye"></button>
+                            <button class="color-dot" data-color="#e8f5e9" style="background:#e8f5e9" title="Hijau"></button>
+                            <button class="color-dot" data-color="#e3f2fd" style="background:#e3f2fd" title="Biru"></button>
+                            <button class="color-dot" data-color="#fce4ec" style="background:#fce4ec" title="Merah Muda"></button>
+                            <button class="color-dot" data-color="#f3e5f5" style="background:#f3e5f5" title="Ungu"></button>
+                            <button class="color-dot" data-color="#fffde7" style="background:#fffde7" title="Kuning"></button>
+                            <button class="color-dot" data-color="#efebe9" style="background:#efebe9" title="Cokelat"></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <textarea id="noteContent" placeholder="Tulis catatan di sini..." rows="8"></textarea>
+                </div>
+                <div class="form-group checklist-section">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="enableChecklist">
+                        <span>Gunakan Checklist</span>
+                    </label>
+                    <div id="checklistContainer" class="checklist-container" style="display:none;">
+                        <div id="checklistItems"></div>
+                        <div class="checklist-add">
+                            <input type="text" id="checklistInput" placeholder="Tambah item...">
+                            <button class="btn-sm" id="addChecklistItem">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group reminder-section">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="enableReminder">
+                        <span>⏰ Atur Pengingat</span>
+                    </label>
+                    <div id="reminderFields" class="reminder-fields" style="display:none;">
+                        <input type="datetime-local" id="reminderDate" class="input-reminder">
+                        <select id="reminderRepeat" class="input-reminder">
+                            <option value="none">Tidak berulang</option>
+                            <option value="daily">Setiap hari</option>
+                            <option value="weekly">Setiap minggu</option>
+                            <option value="monthly">Setiap bulan</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="label-selector">
+                        <span class="label-selector-title">Label:</span>
+                        <div id="labelSelector" class="label-chips">
+                            <!-- Label chips rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelNote">Batal</button>
+                <button class="btn btn-primary" id="saveNote">💾 Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Label Editor -->
+    <div class="modal-overlay" id="labelModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>Tambah Label</h2>
+                <button class="btn-icon close-label-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input type="text" id="labelName" placeholder="Nama label..." maxlength="30">
+                </div>
+                <div class="form-group">
+                    <div class="color-options" id="labelColorOptions">
+                        <button class="color-dot active" data-color="#ef5350" style="background:#ef5350"></button>
+                        <button class="color-dot" data-color="#42a5f5" style="background:#42a5f5"></button>
+                        <button class="color-dot" data-color="#66bb6a" style="background:#66bb6a"></button>
+                        <button class="color-dot" data-color="#ffa726" style="background:#ffa726"></button>
+                        <button class="color-dot" data-color="#ab47bc" style="background:#ab47bc"></button>
+                        <button class="color-dot" data-color="#26c6da" style="background:#26c6da"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-label-modal">Batal</button>
+                <button class="btn btn-primary" id="saveLabel">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirm Delete -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>Hapus Catatan</h2>
+                <button class="btn-icon close-delete-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah kamu yakin ingin menghapus catatan ini? Tindakan ini tidak bisa dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-delete-modal">Batal</button>
+                <button class="btn btn-danger" id="confirmDelete">🗑️ Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Reminder Alert -->
+    <div class="reminder-alert-overlay" id="reminderAlert" style="display:none;">
+        <div class="reminder-alert">
+            <div class="reminder-alert-icon">⏰</div>
+            <h3 id="reminderAlertTitle">Pengingat!</h3>
+            <p id="reminderAlertText"></p>
+            <button class="btn btn-primary" id="dismissReminder">OK, Mengerti</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

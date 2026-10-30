@@ -54,43 +54,6 @@
 - Browser modern (Chrome, Edge, Firefox, Safari)
 - [Node.js](https://nodejs.org/) (opsional, untuk local server)
 
-### 1. Clone / Download
-
-```bash
-git clone https://github.com/username/catatanku.git
-cd catatanku
-```
-
-Atau download ZIP dan extract.
-
-### 2. Generate Ikon
-
-1. Buka `generate-icons.html` di browser
-2. Klik **"📥 Download Semua Ikon"**
-3. Pindahkan 8 file PNG ke folder `icons/`
-
-### 3. Jalankan Lokal
-
-**Opsi A — Menggunakan `serve` (Recommended):**
-```bash
-npx serve .
-```
-Buka http://localhost:3000
-
-**Opsi B — Menggunakan Python:**
-```bash
-python -m http.server 3000
-```
-Buka http://localhost:3000
-
-**Opsi C — Buka Langsung:**
-
-Double-click `index.html` — aplikasi berjalan, tapi Service Worker tidak aktif (perlu server).
-
-> **Catatan:** `localhost` sudah dianggap aman oleh Chrome, jadi **tidak perlu HTTPS** untuk testing lokal.
-
----
-
 ## 📲 Install di Android
 
 1. **Deploy** ke hosting (lihat bagian [Hosting](#-hosting-gratis))
@@ -98,17 +61,6 @@ Double-click `index.html` — aplikasi berjalan, tapi Service Worker tidak aktif
 3. Muncul banner **"Install Catatanku"** → ketuk **Install**
 4. Atau ketuk **⋮ Menu → "Add to Home Screen"**
 5. Ikon muncul di home screen — buka seperti app biasa! 🎉
-
----
-
-## 🌐 Hosting (Gratis)
-
-| Platform | Cara Deploy |
-|---|---|
-| **GitHub Pages** | Push ke GitHub → Settings → Pages → Deploy from `main` |
-| **Netlify** | Drag & drop folder di [netlify.com](https://netlify.com) |
-| **Vercel** | Import repo di [vercel.com](https://vercel.com) |
-| **Cloudflare Pages** | Connect repo di [pages.cloudflare.com](https://pages.cloudflare.com) |
 
 ---
 

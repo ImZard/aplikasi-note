@@ -56,11 +56,10 @@
 
 ## 📲 Install di Android
 
-1. **Deploy** ke hosting (lihat bagian [Hosting](#-hosting-gratis))
-2. Buka URL di **Chrome Android**
-3. Muncul banner **"Install Catatanku"** → ketuk **Install**
-4. Atau ketuk **⋮ Menu → "Add to Home Screen"**
-5. Ikon muncul di home screen — buka seperti app biasa! 🎉
+1. Buka URL di **Chrome Android**
+2. Muncul banner **"Install Catatanku"** → ketuk **Install**
+3. Atau ketuk **⋮ Menu → "Add to Home Screen"**
+4. Ikon muncul di home screen — buka seperti app biasa! 🎉
 
 ---
 

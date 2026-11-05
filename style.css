@@ -972,22 +972,34 @@ body.sidebar-is-collapsed #openSidebar {
     position: fixed;
     bottom: calc(20px + var(--safe-bottom));
     right: 20px;
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
     border-radius: var(--radius-md);
     border: 1px solid var(--primary);
     background: var(--primary);
-    color: #ffffff;
+    color: var(--primary-text);
     cursor: pointer;
-    box-shadow: var(--shadow-dropdown);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
     z-index: 50;
     align-items: center;
     justify-content: center;
-    transition: background var(--transition);
+    transition: background var(--transition), transform var(--duration-fast) var(--ease-out-snappy);
+}
+
+.fab svg {
+    stroke: var(--primary-text);
 }
 
 .fab:hover {
     background: var(--primary-hover);
+}
+
+.fab:active {
+    transform: scale(0.92);
+}
+
+[data-theme="dark"] .fab {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
 }
 
 /* ===== Modal System ===== */

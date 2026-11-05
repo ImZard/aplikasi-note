@@ -197,14 +197,15 @@ function renderNotes() {
     notesGrid.style.display = '';
     emptyState.style.display = 'none';
 
-    notesGrid.innerHTML = filtered.map(note => {
+    notesGrid.innerHTML = filtered.map((note, index) => {
         const noteLabels = (note.labels || []).map(lId => labels.find(l => l.id === lId)).filter(Boolean);
         const hasChecklist = note.checklist && note.checklist.length > 0;
         const checkedCount = hasChecklist ? note.checklist.filter(i => i.checked).length : 0;
         const cardBg = note.color && note.color !== '#ffffff' ? `background-color: ${note.color};` : '';
+        const delay = Math.min(index * 50, 400);
 
         return `
-            <article class="note-card ${note.pinned ? 'is-pinned' : ''}" data-id="${note.id}" style="${cardBg}" onclick="openEditNote('${note.id}')">
+            <article class="note-card ${note.pinned ? 'is-pinned' : ''}" data-id="${note.id}" style="${cardBg} --enter-delay: ${delay}ms;" onclick="openEditNote('${note.id}')">
                 <div class="note-card-header">
                     <h3 class="note-card-title">${escapeHtml(note.title || 'Tanpa Judul')}</h3>
                     <div class="note-card-actions">
@@ -746,14 +747,46 @@ function updatePageTitle() {
     $('#pageTitle').textContent = titles[currentFilter] || 'Semua Catatan';
 }
 
-function openSidebar() {
-    sidebar.classList.add('open');
-    sidebarOverlay.classList.add('active');
+function isMobileView() {
+    return window.innerWidth <= 768;
 }
 
-function closeSidebar() {
-    sidebar.classList.remove('open');
-    sidebarOverlay.classList.remove('active');
+function openSidebar() {
+    if (isMobileView()) {
+        sidebar.classList.add('open');
+        sidebarOverlay.classList.add('active');
+    } else {
+        sidebar.classList.remove('collapsed');
+        document.body.classList.remove('sidebar-is-collapsed');
+        localStorage.setItem('sidebarCollapsed', '0');
+    }
+}
+
+function closeSidebar(isUserAction = false) {
+    if (isMobileView()) {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('active');
+    } else if (isUserAction) {
+        sidebar.classList.add('collapsed');
+        document.body.classList.add('sidebar-is-collapsed');
+        localStorage.setItem('sidebarCollapsed', '1');
+    }
+}
+
+function toggleSidebar() {
+    if (isMobileView()) {
+        if (sidebar.classList.contains('open')) {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
+    } else {
+        if (sidebar.classList.contains('collapsed')) {
+            openSidebar();
+        } else {
+            closeSidebar(true);
+        }
+    }
 }
 
 // ===== Event Listeners Initializer =====
@@ -773,6 +806,12 @@ document.addEventListener('DOMContentLoaded', () => {
     renderLabels();
     updateStorageInfo();
 
+    // Restore desktop collapsed sidebar state if saved
+    if (!isMobileView() && localStorage.getItem('sidebarCollapsed') === '1') {
+        sidebar.classList.add('collapsed');
+        document.body.classList.add('sidebar-is-collapsed');
+    }
+
     // Check reminders periodically
     setInterval(checkReminders, 10000);
     checkReminders();
@@ -787,7 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderLabels();
             updatePageTitle();
             renderNotes();
-            closeSidebar();
+            if (isMobileView()) closeSidebar();
         });
     });
 
@@ -847,10 +886,10 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#viewIcon').innerHTML = currentView === 'grid' ? ICONS.grid : ICONS.list;
     });
 
-    // Mobile Sidebar
-    $('#openSidebar').addEventListener('click', openSidebar);
-    $('#closeSidebar').addEventListener('click', closeSidebar);
-    sidebarOverlay.addEventListener('click', closeSidebar);
+    // Sidebar Toggle (Mobile & Desktop Collapsible)
+    $('#openSidebar')?.addEventListener('click', openSidebar);
+    $('#closeSidebar')?.addEventListener('click', () => closeSidebar(true));
+    sidebarOverlay?.addEventListener('click', () => closeSidebar(true));
 
     // Label Modal
     $('#addLabelBtn').addEventListener('click', () => {
@@ -935,6 +974,10 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             openNewNote();
         }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+            e.preventDefault();
+            toggleSidebar();
+        }
         if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !noteModal.classList.contains('active')) {
             e.preventDefault();
             searchInput.focus();
@@ -947,7 +990,46 @@ document.addEventListener('DOMContentLoaded', () => {
             saveNote();
         }
     });
+
+    // Initialize Card Tilt & Scroll Parallax
+    initParallaxEffects();
 });
+
+// ===== Parallax & Motion Engine =====
+function initParallaxEffects() {
+    const container = $('#notesContainer');
+    if (!container) return;
+
+    // Scroll Parallax for ambient background
+    container.addEventListener('scroll', () => {
+        const scrolled = container.scrollTop;
+        container.style.setProperty('--scroll-y', `${scrolled}px`);
+    }, { passive: true });
+
+    // Interactive 3D Card Parallax on pointer move
+    container.addEventListener('mousemove', (e) => {
+        const card = e.target.closest('.note-card');
+        if (!card) return;
+
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const rotateX = ((y - centerY) / centerY) * -5;
+        const rotateY = ((x - centerX) / centerX) * 5;
+
+        card.style.transform = `perspective(700px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-3px)`;
+    });
+
+    container.addEventListener('mouseout', (e) => {
+        const card = e.target.closest('.note-card');
+        if (card && (!e.relatedTarget || !card.contains(e.relatedTarget))) {
+            card.style.transform = '';
+        }
+    });
+}
 
 // Global functions for inline HTML calls
 window.openEditNote = openEditNote;

@@ -45,7 +45,8 @@
           <button
             class="btn-icon sidebar-toggle-btn"
             id="closeSidebar"
-            aria-label="Tutup menu samping"
+            aria-label="Sembunyikan menu samping"
+            title="Sembunyikan menu samping"
           >
             <svg
               width="18"
@@ -54,8 +55,11 @@
               fill="none"
               stroke="currentColor"
               stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-              <path d="M18 6L6 18M6 6l12 12" />
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
             </svg>
           </button>
         </div>

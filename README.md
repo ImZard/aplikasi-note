@@ -24,7 +24,6 @@ Aplikasi ini dibangun menggunakan berkas statis murni (HTML, CSS, dan JavaScript
 ### Opsi 1: Menggunakan Peramban Langsung
 Buka berkas `index.html` langsung menggunakan peramban web (Google Chrome, Microsoft Edge, Firefox, Safari).
 
-<<<<<<< HEAD
 ### Opsi 2: Menggunakan Server Lokal Ringan (Direkomendasikan untuk PWA)
 Agar fitur Service Worker dan instalasi PWA aktif saat pengujian, jalankan server statis:
 
@@ -54,23 +53,10 @@ Seluruh data catatan dan label disimpan langsung di media **LocalStorage** peram
 | Pintasan | Fungsi |
 |---|---|
 | `Ctrl + N` / `Cmd + N` | Membuka editor catatan baru |
+| `Ctrl + B` / `Cmd + B` | Menyembunyikan / menampilkan menu samping (*toggle sidebar*) |
 | `Ctrl + F` / `Cmd + F` | Memfokuskan kursor ke bilah pencarian |
 | `Ctrl + Enter` / `Cmd + Enter` | Menyimpan catatan saat editor aktif |
 | `Escape` | Menutup jendela editor atau dialog konfirmasi |
-=======
-## 🚀 Cara Menjalankan
-
-### Prasyarat
-- Browser modern (Chrome, Edge, Firefox, Safari)
-- [Node.js](https://nodejs.org/) (opsional, untuk local server)
-
-## 📲 Install di Android
-
-1. Buka URL di **Chrome Android**
-2. Muncul banner **"Install Catatanku"** → ketuk **Install**
-3. Atau ketuk **⋮ Menu → "Add to Home Screen"**
-4. Ikon muncul di home screen — buka seperti app biasa! 🎉
->>>>>>> d1c3b394578574cbac23c574f9ad033f629d12e9
 
 ---
 

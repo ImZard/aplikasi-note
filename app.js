@@ -26,6 +26,46 @@ const reminderAlert = $('#reminderAlert');
 const installBanner = $('#installBanner');
 const offlineBanner = $('#offlineBanner');
 
+// ===== Theme Engine (Light / Dark Mode) =====
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+    applyTheme(theme);
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+
+    const themeIcon = $('#themeIcon');
+    if (themeIcon) {
+        themeIcon.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
+    }
+
+    const metaThemeColor = $('meta[name="theme-color"]');
+    if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', theme === 'dark' ? '#090d16' : '#0f172a');
+    }
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(nextTheme);
+}
+
+const DARK_MODE_NOTE_COLORS = {
+    '#ffffff': '#111827',
+    '#f8fafc': '#161e2e',
+    '#fefce8': '#262210',
+    '#f0fdf4': '#122619',
+    '#eff6ff': '#13233a',
+    '#fdf2f8': '#2a1624',
+    '#faf5ff': '#241630',
+    '#fff7ed': '#2a1c12'
+};
+
 // ===== SVG Icon Helpers (Monochrome, Crisp, Accessible) =====
 const ICONS = {
     pin: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17v5"/><path d="M9 2h6l-1 7h3l-5 8-5-8h3z"/></svg>`,
@@ -36,7 +76,9 @@ const ICONS = {
     clock: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
     check: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`,
     grid: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
-    list: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`
+    list: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`,
+    sun: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+    moon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`
 };
 
 // ===== Utilities =====
@@ -201,11 +243,17 @@ function renderNotes() {
         const noteLabels = (note.labels || []).map(lId => labels.find(l => l.id === lId)).filter(Boolean);
         const hasChecklist = note.checklist && note.checklist.length > 0;
         const checkedCount = hasChecklist ? note.checklist.filter(i => i.checked).length : 0;
-        const cardBg = note.color && note.color !== '#ffffff' ? `background-color: ${note.color};` : '';
+        const noteColor = note.color || '#ffffff';
+        const darkColor = DARK_MODE_NOTE_COLORS[noteColor] || '#111827';
+        const hasCustomColor = noteColor !== '#ffffff';
         const delay = Math.min(index * 50, 400);
 
         return `
-            <article class="note-card ${note.pinned ? 'is-pinned' : ''}" data-id="${note.id}" style="${cardBg} --enter-delay: ${delay}ms;" onclick="openEditNote('${note.id}')">
+            <article class="note-card ${note.pinned ? 'is-pinned' : ''}" 
+                     data-id="${note.id}" 
+                     data-has-custom-color="${hasCustomColor ? 'true' : 'false'}"
+                     style="--card-light-bg: ${noteColor}; --card-dark-bg: ${darkColor}; --enter-delay: ${delay}ms;" 
+                     onclick="openEditNote('${note.id}')">
                 <div class="note-card-header">
                     <h3 class="note-card-title">${escapeHtml(note.title || 'Tanpa Judul')}</h3>
                     <div class="note-card-actions">
@@ -791,6 +839,7 @@ function toggleSidebar() {
 
 // ===== Event Listeners Initializer =====
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     registerServiceWorker();
     setupInstallPrompt();
     setupNetworkDetection();
@@ -878,6 +927,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Search and Sort
     searchInput.addEventListener('input', renderNotes);
     sortSelect.addEventListener('change', renderNotes);
+
+    // Theme Toggle
+    $('#themeToggle')?.addEventListener('click', toggleTheme);
 
     // Grid / List View Toggle
     $('#toggleView').addEventListener('click', () => {
@@ -977,6 +1029,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
             e.preventDefault();
             toggleSidebar();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'd') {
+            e.preventDefault();
+            toggleTheme();
         }
         if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !noteModal.classList.contains('active')) {
             e.preventDefault();

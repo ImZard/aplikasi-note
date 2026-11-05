@@ -54,6 +54,7 @@ Seluruh data catatan dan label disimpan langsung di media **LocalStorage** peram
 |---|---|
 | `Ctrl + N` / `Cmd + N` | Membuka editor catatan baru |
 | `Ctrl + B` / `Cmd + B` | Menyembunyikan / menampilkan menu samping (*toggle sidebar*) |
+| `Ctrl + Shift + D` / `Cmd + Shift + D` | Beralih antara mode gelap dan terang (*toggle dark mode*) |
 | `Ctrl + F` / `Cmd + F` | Memfokuskan kursor ke bilah pencarian |
 | `Ctrl + Enter` / `Cmd + Enter` | Menyimpan catatan saat editor aktif |
 | `Escape` | Menutup jendela editor atau dialog konfirmasi |

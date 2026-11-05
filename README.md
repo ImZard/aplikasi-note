@@ -1,209 +1,79 @@
-# 📝 Catatanku — Aplikasi Catatan & Pengingat
+# Catatanku
 
-<p align="center">
-  <img src="icons/icon.svg" width="120" alt="Catatanku Logo">
-</p>
-
-<p align="center">
-  <strong>Aplikasi catatan dan pengingat pribadi berbasis PWA.</strong><br>
-  100% offline — semua data tersimpan lokal di perangkatmu.
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/platform-Web%20%7C%20Android%20%7C%20iOS-blue" alt="Platform">
-  <img src="https://img.shields.io/badge/storage-LocalStorage-green" alt="Storage">
-  <img src="https://img.shields.io/badge/status-Production%20Ready-brightgreen" alt="Status">
-  <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
-</p>
+Aplikasi web progresif (PWA) untuk mencatat dan mengatur pengingat harian. Bekerja sepenuhnya secara offline tanpa dependensi server eksternal, seluruh data disimpan di media penyimpanan lokal peramban (*LocalStorage*).
 
 ---
 
-## ✨ Fitur
+## Fitur Utama
 
-| Fitur | Deskripsi |
-|---|---|
-| 📝 **Catatan** | Buat, edit, dan hapus catatan dengan mudah |
-| ✅ **Checklist** | Buat daftar tugas (to-do list) dalam catatan |
-| ⏰ **Pengingat** | Atur pengingat dengan waktu tertentu |
-| 🔁 **Pengingat Berulang** | Harian, mingguan, atau bulanan |
-| 📌 **Sematkan** | Pin catatan penting ke bagian atas |
-| 🗄️ **Arsip** | Arsipkan catatan yang sudah selesai |
-| 🏷️ **Label** | Organisasi catatan dengan label warna-warni |
-| 🎨 **Warna Catatan** | 8 pilihan warna latar belakang catatan |
-| 🔍 **Pencarian** | Cari catatan berdasarkan judul, isi, atau checklist |
-| 📊 **Sortir** | Urutkan berdasarkan terbaru, terlama, A-Z, atau pengingat |
-| 📤 **Ekspor** | Backup semua data ke file JSON |
-| 📥 **Impor** | Restore data dari file JSON backup |
-| 📴 **Offline** | Berfungsi penuh tanpa koneksi internet |
-| 📲 **Installable** | Bisa dipasang di home screen Android/iOS |
-| 🔔 **Notifikasi** | Notifikasi browser saat pengingat aktif |
-| 📳 **Vibration** | Getaran HP saat pengingat (mobile) |
-| 📱 **Responsif** | Tampilan optimal di HP, tablet, dan desktop |
+- **Penyuntingan Catatan:** Membuat, memperbarui, dan menghapus catatan teks dengan cepat.
+- **Daftar Tugas (Checklist):** Mengelola butir tugas langsung di dalam catatan.
+- **Pengingat Waktu:** Mengatur pengingat waktu satu kali atau berulang (harian, mingguan, bulanan).
+- **Pengelompokan & Label:** Memberi label kategori berwarna dan menyematkan catatan penting ke bagian teratas.
+- **Arsip & Pemfilteran:** Mengarsipkan catatan lama serta memfilter catatan berdasarkan status atau label.
+- **Pencarian & Pengurutan:** Mencari catatan berdasarkan kata kunci judul/isi dan mengurutkannya secara alfabetis atau kronologis.
+- **Portabilitas Data:** Ekspor dan impor seluruh data dalam format berkas JSON untuk pencadangan mandiri.
+- **PWA & Offline:** Dapat dipasang (*install*) ke layar utama ponsel (Android/iOS) atau desktop dan tetap berfungsi tanpa internet.
 
 ---
 
-## 📸 Screenshot
+## Cara Menjalankan Secara Lokal
 
-> Buka `index.html` di browser untuk melihat tampilan langsung.
+Aplikasi ini dibangun menggunakan berkas statis murni (HTML, CSS, dan JavaScript) tanpa dependensi kompilasi.
 
----
+### Opsi 1: Menggunakan Peramban Langsung
+Buka berkas `index.html` langsung menggunakan peramban web (Google Chrome, Microsoft Edge, Firefox, Safari).
 
-## 🚀 Cara Menjalankan
-
-### Prasyarat
-- Browser modern (Chrome, Edge, Firefox, Safari)
-- [Node.js](https://nodejs.org/) (opsional, untuk local server)
-
-### 1. Clone / Download
+### Opsi 2: Menggunakan Server Lokal Ringan (Direkomendasikan untuk PWA)
+Agar fitur Service Worker dan instalasi PWA aktif saat pengujian, jalankan server statis:
 
 ```bash
-git clone https://github.com/username/catatanku.git
-cd catatanku
-```
-
-Atau download ZIP dan extract.
-
-### 2. Generate Ikon
-
-1. Buka `generate-icons.html` di browser
-2. Klik **"📥 Download Semua Ikon"**
-3. Pindahkan 8 file PNG ke folder `icons/`
-
-### 3. Jalankan Lokal
-
-**Opsi A — Menggunakan `serve` (Recommended):**
-```bash
+# Menggunakan Node.js (npx)
 npx serve .
-```
-Buka http://localhost:3000
 
-**Opsi B — Menggunakan Python:**
-```bash
+# Atau menggunakan Python 3
 python -m http.server 3000
 ```
-Buka http://localhost:3000
 
-**Opsi C — Buka Langsung:**
-
-Double-click `index.html` — aplikasi berjalan, tapi Service Worker tidak aktif (perlu server).
-
-> **Catatan:** `localhost` sudah dianggap aman oleh Chrome, jadi **tidak perlu HTTPS** untuk testing lokal.
+Buka alamat `http://localhost:3000` di peramban Anda. Tidak memerlukan sertifikat SSL/HTTPS saat diuji pada lingkungan `localhost`.
 
 ---
 
-## 📲 Install di Android
+## Penyimpanan Data
 
-1. **Deploy** ke hosting (lihat bagian [Hosting](#-hosting-gratis))
-2. Buka URL di **Chrome Android**
-3. Muncul banner **"Install Catatanku"** → ketuk **Install**
-4. Atau ketuk **⋮ Menu → "Add to Home Screen"**
-5. Ikon muncul di home screen — buka seperti app biasa! 🎉
+Seluruh data catatan dan label disimpan langsung di media **LocalStorage** peramban Anda:
+- Data tidak pernah dikirim ke peladen luar (*zero-telemetry*).
+- Riwayat catatan tetap ada selama data peramban tidak dibersihkan secara manual.
+- Gunakan fitur **Ekspor JSON** pada menu samping untuk mencadangkan berkas data secara berkala.
 
 ---
 
-## 🌐 Hosting (Gratis)
+## Pintasan Papan Ketik
 
-| Platform | Cara Deploy |
+| Pintasan | Fungsi |
 |---|---|
-| **GitHub Pages** | Push ke GitHub → Settings → Pages → Deploy from `main` |
-| **Netlify** | Drag & drop folder di [netlify.com](https://netlify.com) |
-| **Vercel** | Import repo di [vercel.com](https://vercel.com) |
-| **Cloudflare Pages** | Connect repo di [pages.cloudflare.com](https://pages.cloudflare.com) |
+| `Ctrl + N` / `Cmd + N` | Membuka editor catatan baru |
+| `Ctrl + F` / `Cmd + F` | Memfokuskan kursor ke bilah pencarian |
+| `Ctrl + Enter` / `Cmd + Enter` | Menyimpan catatan saat editor aktif |
+| `Escape` | Menutup jendela editor atau dialog konfirmasi |
 
 ---
 
-## 📁 Struktur Proyek
+## Struktur Berkas
 
 ```
-catatanku/
-├── index.html              # Halaman utama
-├── style.css               # Styling (mobile-first, responsif)
-├── app.js                  # Logika aplikasi + PWA
-├── manifest.json           # Web App Manifest
-├── service-worker.js       # Service Worker (offline cache)
-├── generate-icons.html     # Tool generate ikon PNG
-├── README.md               # Dokumentasi
+aplikasi note/
+├── index.html          # Struktur antarmuka semantik
+├── style.css           # Lembar gaya tata letak responsif
+├── app.js              # Logika aplikasi dan manajemen data
+├── manifest.json       # Konfigurasi PWA
+├── service-worker.js   # Penanganan tembolok offline
 └── icons/
-    ├── icon.svg            # Ikon vektor (scalable)
-    ├── icon-72.png         # Ikon 72×72
-    ├── icon-96.png         # Ikon 96×96
-    ├── icon-128.png        # Ikon 128×128
-    ├── icon-144.png        # Ikon 144×144
-    ├── icon-152.png        # Ikon 152×152
-    ├── icon-192.png        # Ikon 192×192
-    ├── icon-384.png        # Ikon 384×384
-    └── icon-512.png        # Ikon 512×512
+    └── icon.svg        # Ikon vektor aplikasi
 ```
 
 ---
 
-## 💾 Penyimpanan Data
+## Lisensi
 
-Semua data disimpan menggunakan **LocalStorage** di browser/device.
-
-- ✅ **Tidak ada server** — data tidak pernah dikirim ke mana pun
-- ✅ **Privasi terjamin** — hanya tersimpan di perangkatmu
-- ✅ **Offline** — tidak butuh koneksi internet
-- ⚠️ **Batasan** — ~5-10 MB per domain (cukup untuk ribuan catatan)
-
-### Backup & Restore
-
-- **Ekspor:** Sidebar → 📤 Ekspor → file JSON ter-download
-- **Impor:** Sidebar → 📥 Impor → pilih file JSON
-
----
-
-## ⌨️ Keyboard Shortcuts
-
-| Shortcut | Aksi |
-|---|---|
-| `Ctrl + N` | Buat catatan baru |
-| `Ctrl + F` | Fokus ke kotak pencarian |
-| `Ctrl + Enter` | Simpan catatan (di dalam modal) |
-| `Esc` | Tutup modal/dialog |
-
----
-
-## 🛠️ Teknologi
-
-- **HTML5** — Struktur semantik
-- **CSS3** — Flexbox, Grid, CSS Variables, animasi
-- **JavaScript** (Vanilla) — Tanpa framework/library
-- **PWA** — Service Worker, Web App Manifest
-- **LocalStorage** — Penyimpanan data lokal
-
----
-
-## 📄 Lisensi
-
-Proyek ini dilisensikan di bawah [MIT License](LICENSE).
-
-```
-MIT License
-
-Copyright (c) 2026
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
----
-
-<p align="center">
-  Dibuat dengan ❤️ menggunakan HTML, CSS & JavaScript
-</p>
+Proyek ini dirilis di bawah lisensi [MIT](LICENSE).

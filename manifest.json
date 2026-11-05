@@ -1,13 +1,13 @@
 {
-    "name": "Catatanku - Catatan & Pengingat",
+    "name": "Catatanku",
     "short_name": "Catatanku",
-    "description": "Aplikasi catatan dan pengingat pribadi. Simpan catatan, buat checklist, dan atur pengingat — semua tersimpan lokal di perangkatmu.",
+    "description": "Aplikasi catatan dan pengingat pribadi berbasis offline dengan penyimpanan lokal.",
     "start_url": "./index.html",
     "scope": ".",
     "display": "standalone",
     "orientation": "portrait",
-    "background_color": "#f1f5f9",
-    "theme_color": "#4f46e5",
+    "background_color": "#f8fafc",
+    "theme_color": "#0f172a",
     "lang": "id",
     "categories": ["productivity", "utilities"],
     "icons": [

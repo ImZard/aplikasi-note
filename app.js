@@ -1,4 +1,4 @@
-// ===== State =====
+// ===== Anti-Slop State & Local Storage Architecture =====
 let notes = JSON.parse(localStorage.getItem('notes') || '[]');
 let labels = JSON.parse(localStorage.getItem('labels') || '[]');
 let currentFilter = 'all';
@@ -26,9 +26,22 @@ const reminderAlert = $('#reminderAlert');
 const installBanner = $('#installBanner');
 const offlineBanner = $('#offlineBanner');
 
+// ===== SVG Icon Helpers (Monochrome, Crisp, Accessible) =====
+const ICONS = {
+    pin: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17v5"/><path d="M9 2h6l-1 7h3l-5 8-5-8h3z"/></svg>`,
+    pinFilled: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 17v5"/><path d="M9 2h6l-1 7h3l-5 8-5-8h3z"/></svg>`,
+    archive: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`,
+    unarchive: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><polyline points="10 12 12 10 14 12"/></svg>`,
+    trash: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>`,
+    clock: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
+    check: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`,
+    grid: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+    list: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`
+};
+
 // ===== Utilities =====
 function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
 }
 
 function save() {
@@ -38,12 +51,13 @@ function save() {
         updateStorageInfo();
     } catch (e) {
         if (e.name === 'QuotaExceededError') {
-            showToast('⚠️ Penyimpanan penuh! Hapus beberapa catatan.');
+            showToast('Penyimpanan lokal penuh. Hapus beberapa catatan.');
         }
     }
 }
 
 function formatDate(dateStr) {
+    if (!dateStr) return '';
     const d = new Date(dateStr);
     const now = new Date();
     const diff = now - d;
@@ -52,17 +66,17 @@ function formatDate(dateStr) {
     const days = Math.floor(diff / 86400000);
 
     if (mins < 1) return 'Baru saja';
-    if (mins < 60) return `${mins} menit lalu`;
-    if (hours < 24) return `${hours} jam lalu`;
-    if (days < 7) return `${days} hari lalu`;
+    if (mins < 60) return `${mins}m lalu`;
+    if (hours < 24) return `${hours}j lalu`;
+    if (days < 7) return `${days}h lalu`;
 
     return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function formatReminder(dateStr) {
     const d = new Date(dateStr);
-    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) +
-        ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) + ' ' +
+        d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 }
 
 function isOverdue(dateStr) {
@@ -74,10 +88,13 @@ function showToast(message) {
     toast.className = 'toast';
     toast.textContent = message;
     toastContainer.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+    }, 2800);
 }
 
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
@@ -88,14 +105,14 @@ function updateStorageInfo() {
     if (!info) return;
     const dataSize = new Blob([localStorage.getItem('notes') || '', localStorage.getItem('labels') || '']).size;
     const sizeStr = dataSize < 1024 ? `${dataSize} B` : `${(dataSize / 1024).toFixed(1)} KB`;
-    info.textContent = `Data lokal: ${sizeStr} • ${notes.length} catatan`;
+    info.textContent = `Lokal: ${sizeStr} • ${notes.length} catatan`;
 }
 
-// ===== Render Notes =====
+// ===== Filter & Search Engine =====
 function getFilteredNotes() {
     let filtered = [...notes];
 
-    // Filter by category
+    // Filter by view tab
     if (currentFilter === 'reminder') {
         filtered = filtered.filter(n => n.reminder && !n.archived);
     } else if (currentFilter === 'pinned') {
@@ -111,7 +128,7 @@ function getFilteredNotes() {
         filtered = filtered.filter(n => n.labels && n.labels.includes(currentLabelFilter));
     }
 
-    // Search
+    // Search query
     const query = searchInput.value.toLowerCase().trim();
     if (query) {
         filtered = filtered.filter(n =>
@@ -121,7 +138,7 @@ function getFilteredNotes() {
         );
     }
 
-    // Sort
+    // Sort order
     const sort = sortSelect.value;
     if (sort === 'newest') {
         filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
@@ -137,7 +154,7 @@ function getFilteredNotes() {
         });
     }
 
-    // Pin to top (except in pinned filter)
+    // Pinning discipline
     if (currentFilter !== 'pinned') {
         const pinned = filtered.filter(n => n.pinned);
         const unpinned = filtered.filter(n => !n.pinned);
@@ -147,6 +164,7 @@ function getFilteredNotes() {
     return filtered;
 }
 
+// ===== Note Card Rendering =====
 function renderNotes() {
     const filtered = getFilteredNotes();
 
@@ -154,24 +172,24 @@ function renderNotes() {
         notesGrid.style.display = 'none';
         emptyState.style.display = 'block';
 
+        const emptyTitle = $('#emptyTitle');
+        const emptyDesc = $('#emptyDesc');
+
         if (searchInput.value.trim()) {
-            emptyState.innerHTML = `
-                <div class="empty-icon">🔍</div>
-                <h3>Tidak ditemukan</h3>
-                <p>Coba kata kunci lain</p>
-            `;
+            emptyTitle.textContent = 'Tidak ada hasil';
+            emptyDesc.textContent = 'Tidak ditemukan catatan yang cocok dengan kata kunci pencarian.';
         } else if (currentFilter === 'archived') {
-            emptyState.innerHTML = `
-                <div class="empty-icon">🗄️</div>
-                <h3>Arsip kosong</h3>
-                <p>Catatan yang diarsipkan akan muncul di sini</p>
-            `;
+            emptyTitle.textContent = 'Arsip kosong';
+            emptyDesc.textContent = 'Catatan yang diarsipkan akan muncul pada halaman ini.';
+        } else if (currentFilter === 'reminder') {
+            emptyTitle.textContent = 'Tidak ada pengingat aktif';
+            emptyDesc.textContent = 'Atur pengingat pada catatan untuk melihat daftarnya di sini.';
+        } else if (currentFilter === 'pinned') {
+            emptyTitle.textContent = 'Tidak ada catatan disematkan';
+            emptyDesc.textContent = 'Sematkan catatan penting agar selalu tampil paling atas.';
         } else {
-            emptyState.innerHTML = `
-                <div class="empty-icon">📝</div>
-                <h3>Belum ada catatan</h3>
-                <p>Ketuk tombol + untuk membuat catatan baru</p>
-            `;
+            emptyTitle.textContent = 'Belum ada catatan';
+            emptyDesc.textContent = 'Mulai susun catatan ide, referensi, atau daftar tugas harian Anda.';
         }
         return;
     }
@@ -183,56 +201,62 @@ function renderNotes() {
         const noteLabels = (note.labels || []).map(lId => labels.find(l => l.id === lId)).filter(Boolean);
         const hasChecklist = note.checklist && note.checklist.length > 0;
         const checkedCount = hasChecklist ? note.checklist.filter(i => i.checked).length : 0;
+        const cardBg = note.color && note.color !== '#ffffff' ? `background-color: ${note.color};` : '';
 
         return `
-            <div class="note-card" data-id="${note.id}" style="background:${note.color || '#ffffff'}" onclick="openEditNote('${note.id}')">
-                ${note.pinned ? '<span class="pin-indicator">📌</span>' : ''}
+            <article class="note-card ${note.pinned ? 'is-pinned' : ''}" data-id="${note.id}" style="${cardBg}" onclick="openEditNote('${note.id}')">
                 <div class="note-card-header">
-                    <div class="note-card-title">${escapeHtml(note.title || 'Tanpa Judul')}</div>
+                    <h3 class="note-card-title">${escapeHtml(note.title || 'Tanpa Judul')}</h3>
                     <div class="note-card-actions">
-                        <button onclick="event.stopPropagation(); togglePin('${note.id}')" title="${note.pinned ? 'Lepas sematan' : 'Sematkan'}">
-                            ${note.pinned ? '📌' : '📍'}
+                        <button class="card-action-btn ${note.pinned ? 'active' : ''}" onclick="event.stopPropagation(); togglePin('${note.id}')" title="${note.pinned ? 'Lepas sematan' : 'Sematkan'}" aria-label="Sematkan">
+                            ${note.pinned ? ICONS.pinFilled : ICONS.pin}
                         </button>
-                        <button onclick="event.stopPropagation(); toggleArchive('${note.id}')" title="${note.archived ? 'Keluarkan dari arsip' : 'Arsipkan'}">
-                            ${note.archived ? '📤' : '🗄️'}
+                        <button class="card-action-btn" onclick="event.stopPropagation(); toggleArchive('${note.id}')" title="${note.archived ? 'Keluarkan dari arsip' : 'Arsipkan'}" aria-label="Arsipkan">
+                            ${note.archived ? ICONS.unarchive : ICONS.archive}
                         </button>
-                        <button onclick="event.stopPropagation(); confirmDelete('${note.id}')" title="Hapus">🗑️</button>
+                        <button class="card-action-btn danger" onclick="event.stopPropagation(); confirmDelete('${note.id}')" title="Hapus" aria-label="Hapus">
+                            ${ICONS.trash}
+                        </button>
                     </div>
                 </div>
+
                 ${note.content ? `<div class="note-card-content">${escapeHtml(note.content)}</div>` : ''}
+
                 ${hasChecklist ? `
                     <div class="note-card-checklist">
-                        ${note.checklist.slice(0, 4).map(item => `
+                        ${note.checklist.slice(0, 3).map(item => `
                             <div class="checklist-preview-item ${item.checked ? 'checked' : ''}">
-                                <span class="check-icon">${item.checked ? '✓' : ''}</span>
+                                <span class="preview-checkbox">${item.checked ? ICONS.check : ''}</span>
                                 <span>${escapeHtml(item.text)}</span>
                             </div>
                         `).join('')}
-                        ${note.checklist.length > 4 ? `<span style="font-size:0.78rem;color:var(--text-muted)">+${note.checklist.length - 4} lainnya</span>` : ''}
-                        <span style="font-size:0.72rem;color:var(--text-muted)">${checkedCount}/${note.checklist.length} selesai</span>
+                        <div class="checklist-counter">${checkedCount} dari ${note.checklist.length} butir selesai</div>
                     </div>
                 ` : ''}
+
                 ${noteLabels.length > 0 ? `
                     <div class="note-card-labels">
                         ${noteLabels.map(l => `<span class="note-label-chip" style="background:${l.color}">${escapeHtml(l.name)}</span>`).join('')}
                     </div>
                 ` : ''}
+
                 <div class="note-card-footer">
                     <span class="note-card-date">${formatDate(note.updatedAt)}</span>
                     ${note.reminder ? `
                         <span class="note-card-reminder ${isOverdue(note.reminder) ? 'overdue' : ''}">
-                            ⏰ ${formatReminder(note.reminder)}
+                            ${ICONS.clock}
+                            <span>${formatReminder(note.reminder)}</span>
                         </span>
                     ` : ''}
                 </div>
-            </div>
+            </article>
         `;
     }).join('');
 
     updateBadges();
 }
 
-// ===== Badges =====
+// ===== Badge Counter Update =====
 function updateBadges() {
     const active = notes.filter(n => !n.archived);
     $('#badgeAll').textContent = active.length;
@@ -241,14 +265,22 @@ function updateBadges() {
     $('#badgeArchived').textContent = notes.filter(n => n.archived).length;
 }
 
-// ===== Labels =====
+// ===== Labels Management =====
 function renderLabels() {
     const labelList = $('#labelList');
+    if (!labelList) return;
+
+    if (labels.length === 0) {
+        labelList.innerHTML = `<span style="font-size:0.75rem;color:var(--text-muted);padding:4px 8px;">Belum ada label</span>`;
+        renderLabelSelector();
+        return;
+    }
+
     labelList.innerHTML = labels.map(l => `
         <button class="label-item ${currentLabelFilter === l.id ? 'active' : ''}" onclick="filterByLabel('${l.id}')">
             <span class="label-dot" style="background:${l.color}"></span>
-            <span>${escapeHtml(l.name)}</span>
-            <button class="delete-label" onclick="event.stopPropagation(); deleteLabel('${l.id}')" title="Hapus label">✕</button>
+            <span class="label-item-name">${escapeHtml(l.name)}</span>
+            <span class="delete-label" onclick="event.stopPropagation(); deleteLabel('${l.id}')" title="Hapus label" role="button">×</span>
         </button>
     `).join('');
 
@@ -258,6 +290,12 @@ function renderLabels() {
 function renderLabelSelector() {
     const selector = $('#labelSelector');
     if (!selector) return;
+
+    if (labels.length === 0) {
+        selector.innerHTML = `<span style="font-size:0.75rem;color:var(--text-muted)">Belum ada label. Tambahkan melalui menu samping.</span>`;
+        return;
+    }
+
     selector.innerHTML = labels.map(l => `
         <span class="label-chip" data-label-id="${l.id}" style="background:${l.color}" onclick="toggleLabelSelection(this)">${escapeHtml(l.name)}</span>
     `).join('');
@@ -293,10 +331,10 @@ function deleteLabel(labelId) {
     save();
     renderLabels();
     renderNotes();
-    showToast('Label dihapus');
+    showToast('Label telah dihapus.');
 }
 
-// ===== Note CRUD =====
+// ===== Note CRUD Operations =====
 function openNewNote() {
     editingNoteId = null;
     $('#modalTitle').textContent = 'Catatan Baru';
@@ -312,13 +350,14 @@ function openNewNote() {
 
     // Reset color
     $$('#colorOptions .color-dot').forEach(d => d.classList.remove('active'));
-    $('#colorOptions .color-dot').classList.add('active');
+    const defaultColorDot = $('#colorOptions .color-dot');
+    if (defaultColorDot) defaultColorDot.classList.add('active');
 
     // Reset labels
     renderLabelSelector();
 
     noteModal.classList.add('active');
-    setTimeout(() => $('#noteTitle').focus(), 300);
+    setTimeout(() => $('#noteTitle').focus(), 150);
 }
 
 function openEditNote(id) {
@@ -327,15 +366,15 @@ function openEditNote(id) {
 
     editingNoteId = id;
     $('#modalTitle').textContent = 'Edit Catatan';
-    $('#noteTitle').value = note.title;
-    $('#noteContent').value = note.content;
+    $('#noteTitle').value = note.title || '';
+    $('#noteContent').value = note.content || '';
 
-    // Color
+    // Color active state
     $$('#colorOptions .color-dot').forEach(d => {
         d.classList.toggle('active', d.dataset.color === (note.color || '#ffffff'));
     });
 
-    // Checklist
+    // Checklist state
     if (note.checklist && note.checklist.length > 0) {
         $('#enableChecklist').checked = true;
         $('#checklistContainer').style.display = 'block';
@@ -346,7 +385,7 @@ function openEditNote(id) {
         $('#checklistItems').innerHTML = '';
     }
 
-    // Reminder
+    // Reminder state
     if (note.reminder) {
         $('#enableReminder').checked = true;
         $('#reminderFields').style.display = 'flex';
@@ -359,7 +398,7 @@ function openEditNote(id) {
         $('#reminderRepeat').value = 'none';
     }
 
-    // Labels
+    // Labels selection
     renderLabelSelector();
     if (note.labels) {
         note.labels.forEach(lId => {
@@ -369,7 +408,7 @@ function openEditNote(id) {
     }
 
     noteModal.classList.add('active');
-    setTimeout(() => $('#noteTitle').focus(), 300);
+    setTimeout(() => $('#noteTitle').focus(), 150);
 }
 
 function saveNote() {
@@ -377,18 +416,17 @@ function saveNote() {
     const content = $('#noteContent').value.trim();
     const color = $('#colorOptions .color-dot.active')?.dataset.color || '#ffffff';
 
-    // Checklist
+    // Checklist items
     let checklist = [];
     if ($('#enableChecklist').checked) {
         $$('#checklistItems .checklist-item').forEach(item => {
-            checklist.push({
-                text: item.querySelector('.item-text').textContent,
-                checked: item.querySelector('input[type="checkbox"]').checked
-            });
+            const text = item.querySelector('.item-text').textContent;
+            const checked = item.querySelector('input[type="checkbox"]').checked;
+            checklist.push({ text, checked });
         });
     }
 
-    // Reminder
+    // Reminder setup
     let reminder = null;
     let reminderRepeat = 'none';
     if ($('#enableReminder').checked && $('#reminderDate').value) {
@@ -396,14 +434,14 @@ function saveNote() {
         reminderRepeat = $('#reminderRepeat').value;
     }
 
-    // Labels
+    // Selected labels
     const selectedLabels = [];
     $$('#labelSelector .label-chip.selected').forEach(el => {
         selectedLabels.push(el.dataset.labelId);
     });
 
     if (!title && !content && checklist.length === 0) {
-        showToast('⚠️ Catatan tidak boleh kosong');
+        showToast('Isi judul atau konten catatan.');
         return;
     }
 
@@ -419,7 +457,7 @@ function saveNote() {
             note.labels = selectedLabels;
             note.updatedAt = new Date().toISOString();
         }
-        showToast('✅ Catatan diperbarui');
+        showToast('Catatan diperbarui.');
     } else {
         const newNote = {
             id: generateId(),
@@ -436,7 +474,7 @@ function saveNote() {
             updatedAt: new Date().toISOString()
         };
         notes.unshift(newNote);
-        showToast('✅ Catatan disimpan');
+        showToast('Catatan disimpan.');
     }
 
     save();
@@ -455,7 +493,7 @@ function togglePin(id) {
         note.pinned = !note.pinned;
         save();
         renderNotes();
-        showToast(note.pinned ? '📌 Disematkan' : 'Sematan dilepas');
+        showToast(note.pinned ? 'Catatan disematkan.' : 'Sematan dilepas.');
     }
 }
 
@@ -466,7 +504,7 @@ function toggleArchive(id) {
         if (note.archived) note.pinned = false;
         save();
         renderNotes();
-        showToast(note.archived ? '🗄️ Diarsipkan' : '📤 Dikembalikan');
+        showToast(note.archived ? 'Catatan diarsipkan.' : 'Catatan dikembalikan.');
     }
 }
 
@@ -481,17 +519,17 @@ function deleteNote() {
     renderNotes();
     deleteModal.classList.remove('active');
     deleteNoteId = null;
-    showToast('🗑️ Catatan dihapus');
+    showToast('Catatan telah dihapus.');
 }
 
-// ===== Checklist =====
+// ===== Checklist Builder =====
 function renderChecklistItems(items) {
     const container = $('#checklistItems');
-    container.innerHTML = items.map((item, i) => `
+    container.innerHTML = items.map(item => `
         <div class="checklist-item">
             <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="this.nextElementSibling.classList.toggle('checked', this.checked)">
             <span class="item-text ${item.checked ? 'checked' : ''}">${escapeHtml(item.text)}</span>
-            <button class="remove-item" onclick="this.parentElement.remove()">✕</button>
+            <button class="remove-item" onclick="this.parentElement.remove()" title="Hapus butir" type="button">×</button>
         </div>
     `).join('');
 }
@@ -506,14 +544,14 @@ function addChecklistItem() {
     item.innerHTML = `
         <input type="checkbox" onchange="this.nextElementSibling.classList.toggle('checked', this.checked)">
         <span class="item-text">${escapeHtml(text)}</span>
-        <button class="remove-item" onclick="this.parentElement.remove()">✕</button>
+        <button class="remove-item" onclick="this.parentElement.remove()" title="Hapus butir" type="button">×</button>
     `;
     $('#checklistItems').appendChild(item);
     input.value = '';
     input.focus();
 }
 
-// ===== Reminder Check =====
+// ===== Reminder Engine =====
 function checkReminders() {
     const now = new Date();
     notes.forEach(note => {
@@ -521,12 +559,10 @@ function checkReminders() {
         const reminderTime = new Date(note.reminder);
         const diff = reminderTime - now;
 
-        // Trigger if within 30 seconds window
         if (diff <= 0 && diff > -30000 && !note._notified) {
             note._notified = true;
             showReminderAlert(note);
 
-            // Handle repeat
             if (note.reminderRepeat !== 'none') {
                 const next = new Date(reminderTime);
                 if (note.reminderRepeat === 'daily') next.setDate(next.getDate() + 1);
@@ -538,7 +574,6 @@ function checkReminders() {
             }
         }
 
-        // Reset notification flag if reminder is in the future
         if (diff > 30000) {
             note._notified = false;
         }
@@ -546,19 +581,17 @@ function checkReminders() {
 }
 
 function showReminderAlert(note) {
-    $('#reminderAlertTitle').textContent = note.title || 'Pengingat!';
-    $('#reminderAlertText').textContent = note.content || 'Waktunya sudah tiba!';
+    $('#reminderAlertTitle').textContent = note.title || 'Pengingat Waktu';
+    $('#reminderAlertText').textContent = note.content || 'Waktu untuk catatan ini telah tiba.';
     reminderAlert.style.display = 'flex';
 
-    // Vibrate on mobile
     if ('vibrate' in navigator) {
-        navigator.vibrate([200, 100, 200]);
+        navigator.vibrate([150, 80, 150]);
     }
 
-    // Browser notification
     if (Notification.permission === 'granted') {
-        new Notification('⏰ ' + (note.title || 'Pengingat'), {
-            body: note.content || 'Waktunya sudah tiba!',
+        new Notification(note.title || 'Pengingat Waktu', {
+            body: note.content || 'Waktu untuk catatan ini telah tiba.',
             badge: 'icons/icon-96.png',
             icon: 'icons/icon-192.png',
             tag: 'reminder-' + note.id,
@@ -567,11 +600,12 @@ function showReminderAlert(note) {
     }
 }
 
-// ===== Export / Import =====
+// ===== Data Portability (Export & Import) =====
 function exportNotes() {
     const data = {
+        app: 'Catatanku',
         version: 1,
-        exportDate: new Date().toISOString(),
+        exportedAt: new Date().toISOString(),
         notes: notes,
         labels: labels
     };
@@ -579,12 +613,12 @@ function exportNotes() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `catatanku-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `catatanku-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showToast('📤 Data berhasil diekspor');
+    showToast('Data berhasil diekspor.');
 }
 
 function importNotes(file) {
@@ -593,12 +627,10 @@ function importNotes(file) {
         try {
             const data = JSON.parse(e.target.result);
             if (!data.notes || !Array.isArray(data.notes)) {
-                showToast('⚠️ Format file tidak valid');
+                showToast('Berkas JSON tidak sesuai struktur Catatanku.');
                 return;
             }
 
-            const importCount = data.notes.length;
-            // Merge: add notes that don't exist yet
             const existingIds = new Set(notes.map(n => n.id));
             let newCount = 0;
             data.notes.forEach(n => {
@@ -608,7 +640,6 @@ function importNotes(file) {
                 }
             });
 
-            // Merge labels
             if (data.labels && Array.isArray(data.labels)) {
                 const existingLabelIds = new Set(labels.map(l => l.id));
                 data.labels.forEach(l => {
@@ -621,80 +652,71 @@ function importNotes(file) {
             save();
             renderNotes();
             renderLabels();
-            showToast(`📥 ${newCount} catatan baru diimpor (dari ${importCount} total)`);
+            showToast(`${newCount} catatan berhasil diimpor.`);
         } catch (err) {
-            showToast('⚠️ Gagal membaca file');
+            showToast('Gagal memproses berkas JSON.');
         }
     };
     reader.readAsText(file);
 }
 
-// ===== PWA: Service Worker Registration =====
+// ===== PWA Offline Service Worker =====
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./service-worker.js')
             .then((registration) => {
-                console.log('[App] Service Worker terdaftar:', registration.scope);
-
-                // Check for updates
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'activated') {
-                            showToast('🔄 Aplikasi diperbarui! Refresh untuk melihat perubahan.');
+                            showToast('Aplikasi telah diperbarui ke versi terbaru.');
                         }
                     });
                 });
             })
-            .catch((error) => {
-                console.log('[App] Registrasi Service Worker gagal:', error);
-            });
+            .catch(() => {});
     }
 }
 
-// ===== PWA: Install Prompt =====
+// ===== PWA Installation Prompt =====
 function setupInstallPrompt() {
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredInstallPrompt = e;
 
-        // Show install banner if not dismissed before
         if (!localStorage.getItem('installDismissed')) {
             installBanner.style.display = 'flex';
         }
     });
 
-    // Install button click
     $('#installBtn').addEventListener('click', async () => {
         if (!deferredInstallPrompt) return;
         deferredInstallPrompt.prompt();
         const result = await deferredInstallPrompt.userChoice;
         if (result.outcome === 'accepted') {
-            showToast('🎉 Aplikasi berhasil diinstall!');
+            showToast('Aplikasi berhasil dipasang.');
         }
         deferredInstallPrompt = null;
         installBanner.style.display = 'none';
     });
 
-    // Dismiss install banner
     $('#dismissInstall').addEventListener('click', () => {
         installBanner.style.display = 'none';
         localStorage.setItem('installDismissed', 'true');
     });
 
-    // Detect if already installed
     window.addEventListener('appinstalled', () => {
         installBanner.style.display = 'none';
         deferredInstallPrompt = null;
-        showToast('🎉 Catatanku berhasil dipasang!');
+        showToast('Catatanku telah terpasang di perangkat.');
     });
 }
 
-// ===== PWA: Online/Offline Detection =====
+// ===== Network State Tracking =====
 function setupNetworkDetection() {
     function updateOnlineStatus() {
         if (!navigator.onLine) {
-            offlineBanner.style.display = 'block';
+            offlineBanner.style.display = 'flex';
         } else {
             offlineBanner.style.display = 'none';
         }
@@ -702,29 +724,28 @@ function setupNetworkDetection() {
 
     window.addEventListener('online', () => {
         offlineBanner.style.display = 'none';
-        showToast('🌐 Kembali online');
+        showToast('Koneksi internet terhubung.');
     });
 
     window.addEventListener('offline', () => {
-        offlineBanner.style.display = 'block';
-        showToast('📴 Mode offline — data tetap tersimpan');
+        offlineBanner.style.display = 'flex';
+        showToast('Beralih ke mode offline.');
     });
 
     updateOnlineStatus();
 }
 
-// ===== Navigation =====
+// ===== Navigation State =====
 function updatePageTitle() {
     const titles = {
         all: 'Semua Catatan',
-        reminder: 'Pengingat',
-        pinned: 'Disematkan',
-        archived: 'Arsip'
+        reminder: 'Pengingat Waktu',
+        pinned: 'Catatan Disematkan',
+        archived: 'Arsip Catatan'
     };
     $('#pageTitle').textContent = titles[currentFilter] || 'Semua Catatan';
 }
 
-// ===== Sidebar Mobile =====
 function openSidebar() {
     sidebar.classList.add('open');
     sidebarOverlay.classList.add('active');
@@ -735,46 +756,28 @@ function closeSidebar() {
     sidebarOverlay.classList.remove('active');
 }
 
-// ===== Handle URL params (shortcut support) =====
-function handleUrlParams() {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('action') === 'new') {
-        setTimeout(() => openNewNote(), 500);
-        // Clean URL
-        window.history.replaceState({}, '', window.location.pathname);
-    }
-}
-
-// ===== Event Listeners =====
+// ===== Event Listeners Initializer =====
 document.addEventListener('DOMContentLoaded', () => {
-    // Register Service Worker
     registerServiceWorker();
-
-    // Setup PWA features
     setupInstallPrompt();
     setupNetworkDetection();
 
-    // Request notification permission
+    // Browser Notification permission request
     if ('Notification' in window && Notification.permission === 'default') {
-        // Delay to not be annoying on first load
         setTimeout(() => {
             Notification.requestPermission();
-        }, 5000);
+        }, 4000);
     }
 
-    // Initial render
     renderNotes();
     renderLabels();
     updateStorageInfo();
 
-    // Handle URL params
-    handleUrlParams();
-
-    // Check reminders every 10 seconds
+    // Check reminders periodically
     setInterval(checkReminders, 10000);
     checkReminders();
 
-    // Navigation
+    // Navigation filter tabs
     $$('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
             $$('.nav-item').forEach(b => b.classList.remove('active'));
@@ -788,33 +791,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // FAB
-    $('#fabAdd').addEventListener('click', openNewNote);
+    // Action Triggers
+    $('#topbarNewNote')?.addEventListener('click', openNewNote);
+    $('#fabAdd')?.addEventListener('click', openNewNote);
 
-    // Modal controls
-    $('#closeModal').addEventListener('click', closeNoteModal);
-    $('#cancelNote').addEventListener('click', closeNoteModal);
-    $('#saveNote').addEventListener('click', saveNote);
+    // Modal Events
+    $('#closeModal')?.addEventListener('click', closeNoteModal);
+    $('#cancelNote')?.addEventListener('click', closeNoteModal);
+    $('#saveNote')?.addEventListener('click', saveNote);
 
-    // Click outside modal
     noteModal.addEventListener('click', (e) => {
         if (e.target === noteModal) closeNoteModal();
     });
 
-    // Checklist toggle
+    // Checklist Toggle
     $('#enableChecklist').addEventListener('change', (e) => {
         $('#checklistContainer').style.display = e.target.checked ? 'block' : 'none';
     });
 
     $('#addChecklistItem').addEventListener('click', addChecklistItem);
     $('#checklistInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addChecklistItem();
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addChecklistItem();
+        }
     });
 
-    // Reminder toggle
+    // Reminder Toggle
     $('#enableReminder').addEventListener('change', (e) => {
         $('#reminderFields').style.display = e.target.checked ? 'flex' : 'none';
-        if (e.target.checked) {
+        if (e.target.checked && !$('#reminderDate').value) {
             const d = new Date();
             d.setHours(d.getHours() + 1);
             d.setMinutes(0);
@@ -822,7 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Color picker
+    // Color Selector
     $$('#colorOptions .color-dot').forEach(dot => {
         dot.addEventListener('click', () => {
             $$('#colorOptions .color-dot').forEach(d => d.classList.remove('active'));
@@ -830,33 +836,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Search
-    searchInput.addEventListener('input', () => {
-        renderNotes();
-    });
+    // Search and Sort
+    searchInput.addEventListener('input', renderNotes);
+    sortSelect.addEventListener('change', renderNotes);
 
-    // Sort
-    sortSelect.addEventListener('change', () => {
-        renderNotes();
-    });
-
-    // View toggle
+    // Grid / List View Toggle
     $('#toggleView').addEventListener('click', () => {
         currentView = currentView === 'grid' ? 'list' : 'grid';
         notesGrid.classList.toggle('list-view', currentView === 'list');
-        $('#viewIcon').textContent = currentView === 'grid' ? '▦' : '▤';
+        $('#viewIcon').innerHTML = currentView === 'grid' ? ICONS.grid : ICONS.list;
     });
 
-    // Sidebar toggle (mobile)
+    // Mobile Sidebar
     $('#openSidebar').addEventListener('click', openSidebar);
     $('#closeSidebar').addEventListener('click', closeSidebar);
     sidebarOverlay.addEventListener('click', closeSidebar);
 
-    // Label modal
+    // Label Modal
     $('#addLabelBtn').addEventListener('click', () => {
         $('#labelName').value = '';
         $$('#labelColorOptions .color-dot').forEach(d => d.classList.remove('active'));
-        $('#labelColorOptions .color-dot').classList.add('active');
+        $('#labelColorOptions .color-dot')?.classList.add('active');
         labelModal.classList.add('active');
     });
 
@@ -877,19 +877,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $('#saveLabel').addEventListener('click', () => {
         const name = $('#labelName').value.trim();
-        const color = $('#labelColorOptions .color-dot.active')?.dataset.color || '#ef5350';
+        const color = $('#labelColorOptions .color-dot.active')?.dataset.color || '#dc2626';
         if (!name) {
-            showToast('⚠️ Nama label tidak boleh kosong');
+            showToast('Tuliskan nama label.');
             return;
         }
         labels.push({ id: generateId(), name, color });
         save();
         renderLabels();
         labelModal.classList.remove('active');
-        showToast('✅ Label ditambahkan');
+        showToast('Label ditambahkan.');
     });
 
-    // Delete modal
+    // Delete Modal
     $$('.close-delete-modal').forEach(btn => {
         btn.addEventListener('click', () => deleteModal.classList.remove('active'));
     });
@@ -900,7 +900,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $('#confirmDelete').addEventListener('click', deleteNote);
 
-    // Reminder alert dismiss
+    // Dismiss Reminder
     $('#dismissReminder').addEventListener('click', () => {
         reminderAlert.style.display = 'none';
     });
@@ -924,7 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Keyboard shortcuts
+    // Keyboard Shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             if (noteModal.classList.contains('active')) closeNoteModal();
@@ -941,25 +941,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Ctrl+Enter to save in modal
     noteModal.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
             saveNote();
         }
     });
-
-    // Prevent double-tap zoom on buttons (mobile)
-    document.addEventListener('touchend', (e) => {
-        if (e.target.closest('button, .btn, .nav-item, .label-item, .color-dot, .label-chip')) {
-            e.preventDefault();
-            e.target.click();
-        }
-    }, { passive: false });
 });
 
-// Make functions available globally for onclick handlers
+// Global functions for inline HTML calls
 window.openEditNote = openEditNote;
+window.openNewNote = openNewNote;
 window.togglePin = togglePin;
 window.toggleArchive = toggleArchive;
 window.confirmDelete = confirmDelete;

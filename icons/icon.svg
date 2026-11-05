@@ -1,26 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#4f46e5"/>
-      <stop offset="100%" style="stop-color:#818cf8"/>
-    </linearGradient>
-  </defs>
-  <!-- Background -->
-  <rect width="512" height="512" rx="92" fill="url(#bg)"/>
-  <!-- Note shadow -->
-  <rect x="147" y="108" width="256" height="282" rx="16" fill="rgba(0,0,0,0.12)"/>
-  <!-- Note body -->
-  <rect x="138" y="98" width="256" height="282" rx="16" fill="white"/>
-  <!-- Fold corner -->
-  <path d="M343 98 L394 149 L343 149 Z" fill="#e2e8f0"/>
-  <!-- Lines -->
-  <line x1="176" y1="175" x2="356" y2="175" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round"/>
-  <line x1="176" y1="220" x2="356" y2="220" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round"/>
-  <line x1="176" y1="265" x2="310" y2="265" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round"/>
-  <!-- Pencil -->
-  <g transform="translate(340, 340) rotate(-45)">
-    <rect x="-10" y="-56" width="20" height="90" rx="3" fill="#f59e0b"/>
-    <rect x="-10" y="-56" width="20" height="14" rx="3" fill="#ef4444"/>
-    <polygon points="-10,34 10,34 0,50" fill="#1e293b"/>
-  </g>
+  <!-- Solid deep ink background -->
+  <rect width="512" height="512" rx="64" fill="#0f172a"/>
+  <!-- Crisp inner border -->
+  <rect x="8" y="8" width="496" height="496" rx="56" fill="none" stroke="#334155" stroke-width="4"/>
+  <!-- Paper surface -->
+  <rect x="136" y="96" width="240" height="320" rx="12" fill="#ffffff"/>
+  <!-- Top header accent -->
+  <rect x="136" y="96" width="240" height="28" rx="12" fill="#e2e8f0"/>
+  <rect x="136" y="112" width="240" height="12" fill="#e2e8f0"/>
+  <!-- Ruled lines -->
+  <line x1="172" y1="168" x2="340" y2="168" stroke="#0f172a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="172" y1="216" x2="340" y2="216" stroke="#94a3b8" stroke-width="6" stroke-linecap="round"/>
+  <line x1="172" y1="264" x2="340" y2="264" stroke="#94a3b8" stroke-width="6" stroke-linecap="round"/>
+  <line x1="172" y1="312" x2="280" y2="312" stroke="#94a3b8" stroke-width="6" stroke-linecap="round"/>
+  <!-- Check indicator mark -->
+  <circle cx="340" cy="356" r="28" fill="#0f172a"/>
+  <polyline points="328 356 337 365 354 348" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
